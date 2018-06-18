@@ -1,10 +1,21 @@
 import React, { Component } from 'react';
-import { Dimensions, View, StyleSheet } from 'react-native';
+import { Dimensions, View, Button, StyleSheet } from 'react-native';
 import axios from 'axios';
+import { createStackNavigator } from 'react-navigation';
 
-import { EditingButton, Gallery, ModalViewer, DeleteButton } from '../components';
+import { Gallery, ModalViewer, DeleteButton } from '../components';
 
 class GalleryContainer extends Component {
+  static navigationOptions = ({ navigation }) => {
+    const editing = navigation.getParam('editing', false);
+    const handleEdit = navigation.getParam('handleEdit', () => {});
+
+    return {
+      title: 'Gallery',
+      headerRight: <Button title={editing ? '취소' : '편집'} onPress={handleEdit} color="black" />
+    };
+  };
+
   state = {
     fetchData: [],
     photos: [],
@@ -19,8 +30,15 @@ class GalleryContainer extends Component {
 
   async componentDidMount() {
     try {
-      const { _addSelectKey } = this;
-      const { cursor } = this.state;
+      const { _addSelectKey, handleEdit } = this;
+      const { cursor, editing } = this.state;
+      const { navigation } = this.props;
+
+      navigation.setParams({
+        editing,
+        handleEdit
+      });
+
       const { data } = await axios.get('https://picsum.photos/list/');
       const addedSelected = _addSelectKey(data);
 
@@ -42,13 +60,15 @@ class GalleryContainer extends Component {
     });
   };
 
-  handlePress = (uri, id) => {
+  handlePress = (imageUri, id) => {
+    const { width } = this;
+    const { navigation } = this.props;
     const { editing, photos } = this.state;
 
     if (!editing) {
-      this.setState({
-        modalVisible: true,
-        imageUri: uri
+      navigation.navigate('Modal', {
+        imageUri,
+        width
       });
     } else {
       const index = photos.findIndex(item => item.id === id);
@@ -73,10 +93,16 @@ class GalleryContainer extends Component {
     });
   };
 
-  handleEdit = () => {
-    this.setState({
+  handleEdit = async () => {
+    const { navigation } = this.props;
+
+    await this.setState({
       editing: !this.state.editing,
       photos: this._addSelectKey(this.state.photos)
+    });
+
+    navigation.setParams({
+      editing: this.state.editing
     });
   };
 
@@ -140,21 +166,11 @@ class GalleryContainer extends Component {
   };
 
   render() {
-    const { photos, modalVisible, imageUri, editing, isFetching } = this.state;
-    const {
-      width,
-      handlePress,
-      handleCloseModal,
-      handleEdit,
-      handleEndReached,
-      handleScroll,
-      handleDelete,
-      onRefresh
-    } = this;
+    const { photos, editing, isFetching } = this.state;
+    const { width, handlePress, handleEndReached, handleScroll, handleDelete, onRefresh } = this;
 
     return (
       <View style={styles.container}>
-        <EditingButton editing={editing} handleEdit={handleEdit} />
         <Gallery
           style={styles.gallery}
           data={photos}
@@ -165,13 +181,6 @@ class GalleryContainer extends Component {
           onRefresh={onRefresh}
           refreshing={isFetching}
           editing={editing}
-        />
-        <ModalViewer
-          style={styles.modal}
-          visible={modalVisible}
-          uri={imageUri}
-          handleCloseModal={handleCloseModal}
-          width={width}
         />
         {editing && <DeleteButton handleDelete={handleDelete} />}
       </View>
@@ -191,4 +200,23 @@ const styles = StyleSheet.create({
   }
 });
 
-export default GalleryContainer;
+const MainStack = createStackNavigator({
+  Home: {
+    screen: GalleryContainer
+  }
+});
+
+export default createStackNavigator(
+  {
+    Main: {
+      screen: MainStack
+    },
+    Modal: {
+      screen: ModalViewer
+    }
+  },
+  {
+    mode: 'modal',
+    headerMode: 'none'
+  }
+);
