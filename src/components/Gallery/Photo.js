@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { StyleSheet, TouchableOpacity, ImageBackground, View, Text } from 'react-native';
+import { StyleSheet, TouchableOpacity, ImageBackground, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 class Photo extends Component {
