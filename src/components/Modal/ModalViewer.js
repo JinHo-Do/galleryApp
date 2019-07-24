@@ -1,33 +1,39 @@
-import React from 'react';
-import { Modal, View, Image, StyleSheet, TouchableHighlight } from 'react-native';
+import React, { PureComponent } from 'react';
+import { View, Image, StyleSheet, TouchableHighlight } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const ModalViewer = ({ width, uri, visible, handleCloseModal }) => {
-  return (
-    <View>
-      <Modal
-        animationType="slide"
-        transparent={false}
-        visible={visible}
-        onRequestClose={() => console.log('close')}
-      >
-        <View style={styles.modal}>
-          <Image
-            style={{ width: width, height: width }}
-            source={{ uri: uri }}
-            resizeMode={'contain'}
-          />
-          <TouchableHighlight style={styles.closeButton} onPress={handleCloseModal}>
-            <Icon name="md-close-circle" size={30} color="white" />
-          </TouchableHighlight>
-        </View>
-      </Modal>
-    </View>
-  );
-};
+class ModalViewer extends PureComponent {
+  static navigationOptions = {
+    headerMode: 'none'
+  };
+
+  handleCloseModal = () => {
+    this.props.navigation.navigate('Home');
+  };
+
+  render() {
+    const { handleCloseModal } = this;
+    const { navigation } = this.props;
+    const uri = navigation.getParam('imageUri');
+    const width = navigation.getParam('width');
+
+    return (
+      <View style={styles.container}>
+        <Image
+          style={{ width: width, height: width }}
+          source={{ uri: uri }}
+          resizeMode={'contain'}
+        />
+        <TouchableHighlight style={styles.closeButton} onPress={handleCloseModal}>
+          <Icon name="md-close-circle" size={30} color="white" />
+        </TouchableHighlight>
+      </View>
+    );
+  }
+}
 
 const styles = StyleSheet.create({
-  modal: {
+  container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
